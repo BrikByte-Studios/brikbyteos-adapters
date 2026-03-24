@@ -34,16 +34,16 @@ func (t AdapterType) Validate() error {
 // This is intentionally separated from runtime behavior so that registry,
 // inspection, ordering, and CLI display can reuse one metadata source.
 type AdapterMetadata struct {
-	Name                string      `json:"name"`
-	Type                AdapterType `json:"type"`
-	Description         string      `json:"description"`
-	Order               int         `json:"order"`
-	SupportedTool       string      `json:"supported_tool"`
-	VersionCommand      []string    `json:"version_command,omitempty"`
-	DefaultTimeoutMs    int         `json:"default_timeout_ms"`
-	SupportedFileGlobs  []string    `json:"supported_file_globs,omitempty"`
-	Aliases             []string    `json:"aliases,omitempty"`
-	Capabilities        []string    `json:"capabilities,omitempty"`
+	Name               string      `json:"name"`
+	Type               AdapterType `json:"type"`
+	Description        string      `json:"description"`
+	Order              int         `json:"order"`
+	SupportedTool      string      `json:"supported_tool"`
+	VersionCommand     []string    `json:"version_command,omitempty"`
+	DefaultTimeoutMs   int         `json:"default_timeout_ms"`
+	SupportedFileGlobs []string    `json:"supported_file_globs,omitempty"`
+	Aliases            []string    `json:"aliases,omitempty"`
+	Capabilities       []string    `json:"capabilities,omitempty"`
 }
 
 // Availability reports whether an adapter can run in the current environment.
@@ -66,16 +66,16 @@ type Logger interface {
 // Runtime constructs this once per adapter execution.
 // Adapters must treat all fields as read-only.
 type RunRequest struct {
-	RunID                string            `json:"run_id"`
-	WorkspaceRoot        string            `json:"workspace_root"`
-	ArtifactsRoot        string            `json:"artifacts_root"`
-	AdapterArtifactsPath string            `json:"adapter_artifacts_path"`
-	Environment          string            `json:"environment"`
-	ExecutionMode        string            `json:"execution_mode"`
-	Timeout              time.Duration     `json:"timeout"`
-	Logger               Logger            `json:"-"`
-	AdapterOptions       map[string]any    `json:"adapter_options,omitempty"`
-	EnvVars              []string          `json:"env_vars,omitempty"`
+	RunID                string         `json:"run_id"`
+	WorkspaceRoot        string         `json:"workspace_root"`
+	ArtifactsRoot        string         `json:"artifacts_root"`
+	AdapterArtifactsPath string         `json:"adapter_artifacts_path"`
+	Environment          string         `json:"environment"`
+	ExecutionMode        string         `json:"execution_mode"`
+	Timeout              time.Duration  `json:"timeout"`
+	Logger               Logger         `json:"-"`
+	AdapterOptions       map[string]any `json:"adapter_options,omitempty"`
+	EnvVars              []string       `json:"env_vars,omitempty"`
 }
 
 // ExecutionStatus is the process-level result of one adapter execution attempt.
@@ -114,17 +114,17 @@ type RunResult struct {
 
 // RawExecution is the canonical pre-normalized execution envelope handed to Normalize.
 type RawExecution struct {
-	SchemaVersion string          `json:"schema_version"`
-	AdapterName   string          `json:"adapter_name"`
-	AdapterType   AdapterType     `json:"adapter_type"`
-	AdapterVersion string         `json:"adapter_version"`
-	Command       string          `json:"command"`
-	Args          []string        `json:"args"`
-	ResolvedBinary string         `json:"resolved_binary,omitempty"`
-	RunResult     RunResult       `json:"run_result"`
-	StdoutPath    string          `json:"stdout_path,omitempty"`
-	StderrPath    string          `json:"stderr_path,omitempty"`
-	ToolOutputPath string         `json:"tool_output_path,omitempty"`
+	SchemaVersion  string      `json:"schema_version"`
+	AdapterName    string      `json:"adapter_name"`
+	AdapterType    AdapterType `json:"adapter_type"`
+	AdapterVersion string      `json:"adapter_version"`
+	Command        string      `json:"command"`
+	Args           []string    `json:"args"`
+	ResolvedBinary string      `json:"resolved_binary,omitempty"`
+	RunResult      RunResult   `json:"run_result"`
+	StdoutPath     string      `json:"stdout_path,omitempty"`
+	StderrPath     string      `json:"stderr_path,omitempty"`
+	ToolOutputPath string      `json:"tool_output_path,omitempty"`
 }
 
 // NormalizationInput is the only allowed input to adapter normalization.
