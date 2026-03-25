@@ -13,11 +13,12 @@ Phase 1 goals:
   - no direct filesystem writes by adapters
   - no backend/API/dashboard dependency
   - structured failure-as-data semantics
+  - one canonical execution input contract
 
 Design rules:
   - metadata is the single source of truth for adapter identity
   - runtime owns persistence and artifact pathing
   - execution and normalization remain separate concerns
-  - normalized output is schema-owned by brikbyteos-schema
+  - adapters receive the same execution context structure
 */
 package sdk
