@@ -64,6 +64,8 @@ jobs:
         run: go build ./...
 
       - name: Test
+        env:
+          CGO_ENABLED: "1"
         run: go test ./... -count=1 -race -covermode=atomic -coverprofile=coverage.out
 
       - name: Upload coverage artifact
