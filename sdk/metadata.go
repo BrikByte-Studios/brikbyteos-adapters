@@ -27,7 +27,7 @@ func (m AdapterMetadata) NormalizedAliases() []string {
 // Clone returns a defensive copy suitable for safe reuse by runtime consumers.
 func (m AdapterMetadata) Clone() AdapterMetadata {
 	return AdapterMetadata{
-		Name:               m.Name,	
+		Name:               m.Name,
 		Type:               m.Type,
 		Description:        m.Description,
 		Order:              m.Order,
