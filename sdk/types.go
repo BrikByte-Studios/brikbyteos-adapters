@@ -34,21 +34,21 @@ func (t AdapterType) Validate() error {
 // This is intentionally separated from runtime behavior so that registry,
 // inspection, ordering, and CLI display can reuse one metadata source.
 type AdapterMetadata struct {
-	Name               string      `json:"name"`
-	Type               AdapterType `json:"type"`
-	Description        string      `json:"description"`
-	Order              int         `json:"order"`
-	SupportedTool      string      `json:"supported_tool"`
-	VersionCommand     []string    `json:"version_command,omitempty"`
-	DefaultTimeoutMs   int         `json:"default_timeout_ms"`
-	SupportedFileGlobs []string    `json:"supported_file_globs,omitempty"`
-	Aliases            []string    `json:"aliases,omitempty"`
-	Capabilities       []string    `json:"capabilities,omitempty"`
+	Name               string      `json:"name"`							// Name is the canonical adapter name.
+	Type               AdapterType `json:"type"`							// Type is the controlled category enum for adapter classification.
+	Description        string      `json:"description"`                     // Description is the human-readable description of the adapter.
+	Order              int         `json:"order"`							// Order is the adapter execution order relative to other adapters.
+	SupportedTool      string      `json:"supported_tool"`					// SupportedTool is the canonical name of the tool that this adapter executes.
+	VersionCommand     []string    `json:"version_command,omitempty"`		// VersionCommand is the command that can be used to detect the tool version.
+	DefaultTimeoutMs   int         `json:"default_timeout_ms"`				// DefaultTimeoutMs is the default timeout for adapter execution.
+	SupportedFileGlobs []string    `json:"supported_file_globs,omitempty"`	// SupportedFileGlobs is the list of globs that this adapter can execute.
+	Aliases            []string    `json:"aliases,omitempty"`				// Aliases is the list of canonical names that this adapter can be invoked by.
+	Capabilities       []string    `json:"capabilities,omitempty"`			// Capabilities is the list of adapter-specific capabilities.
 }
 
 // Availability reports whether an adapter can run in the current environment.
 type Availability struct {
-	Available      bool   `json:"available"`
+	Available      bool   `json:"available"` 					// Avac
 	Reason         string `json:"reason,omitempty"`
 	ResolvedBinary string `json:"resolved_binary,omitempty"`
 }
@@ -161,33 +161,6 @@ func (r RunRequest) Clone() RunRequest {
 	}
 }
 
-// Validate ensures adapter metadata is structurally correct before runtime use.
-func (m AdapterMetadata) Validate() error {
-	if strings.TrimSpace(m.Name) == "" {
-		return fmt.Errorf("adapter metadata name must not be empty")
-	}
-	if err := m.Type.Validate(); err != nil {
-		return err
-	}
-	if strings.TrimSpace(m.Description) == "" {
-		return fmt.Errorf("adapter %q description must not be empty", m.Name)
-	}
-	if m.Order <= 0 {
-		return fmt.Errorf("adapter %q order must be > 0", m.Name)
-	}
-	if strings.TrimSpace(m.SupportedTool) == "" {
-		return fmt.Errorf("adapter %q supported_tool must not be empty", m.Name)
-	}
-	if m.DefaultTimeoutMs <= 0 {
-		return fmt.Errorf("adapter %q default_timeout_ms must be > 0", m.Name)
-	}
-	for i, alias := range m.Aliases {
-		if strings.TrimSpace(alias) == "" {
-			return fmt.Errorf("adapter %q aliases[%d] must not be empty", m.Name, i)
-		}
-	}
-	return nil
-}
 
 // Validate ensures the run request is safe and complete enough for adapter execution.
 func (r RunRequest) Validate() error {
