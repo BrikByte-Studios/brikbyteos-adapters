@@ -51,52 +51,7 @@ func (Adapter) Run(context.Context, sdk.RunRequest) sdk.RunResult {
 	}
 }
 
-// // Normalize converts the raw execution into a canonical schema-shaped JSON payload.
-// //
-// // In production adapters, this payload must match the schema owned by brikbyteos-schema.
-// // This mock keeps the shape intentionally small but representative.
-// func (Adapter) Normalize(_ context.Context, input sdk.NormalizationInput) sdk.NormalizedResult {
-// 	payload := map[string]any{
-// 		"schema_version": "0.1",
-// 		"adapter": map[string]any{
-// 			"name":    input.AdapterMeta.Name,
-// 			"type":    string(input.AdapterMeta.Type),
-// 			"version": input.RawExecution.AdapterVersion,
-// 		},
-// 		"execution": map[string]any{
-// 			"status":      string(input.RawExecution.RunResult.Status),
-// 			"duration_ms": input.RawExecution.RunResult.DurationMs,
-// 		},
-// 		"summary": map[string]any{
-// 			"status":  "pass",
-// 			"total":   1,
-// 			"passed":  1,
-// 			"failed":  0,
-// 			"skipped": 0,
-// 		},
-// 		"evidence": map[string]any{
-// 			"complete": true,
-// 			"issues":   []any{},
-// 		},
-// 		"artifacts": map[string]any{
-// 			"raw_stdout_path":      input.RawExecution.StdoutPath,
-// 			"raw_stderr_path":      input.RawExecution.StderrPath,
-// 			"raw_tool_output_path": input.RawExecution.ToolOutputPath,
-// 		},
-// 		"extensions": map[string]any{
-// 			"adapter_specific": map[string]any{
-// 				"mock": true,
-// 			},
-// 		},
-// 	}
-
-// 	b, err := json.Marshal(payload)
-// 	if err != nil {
-// 		// This should never happen with the fixed mock payload.
-// 		// Return a deterministic fallback that still satisfies the contract shape.
-// 		return []byte(`{"schema_version":"0.1","execution":{"status":"completed","duration_ms":0},"summary":{"status":"unknown","total":0,"passed":0,"failed":0,"skipped":0},"evidence":{"complete":false,"issues":["NORMALIZATION_FAILED"]},"artifacts":{"raw_stdout_path":"","raw_stderr_path":"","raw_tool_output_path":""},"extensions":{"adapter_specific":{"mock_fallback":true}}}`)
-// 	}
-
-// 	_ = time.Second // keeps this file future-proof for later expansion without lint churn
-// 	return b
-// }
+// New returns the canonical mock adapter as an sdk.Adapter.
+func New() sdk.Adapter {
+	return Adapter{}
+}
