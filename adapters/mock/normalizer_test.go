@@ -10,24 +10,24 @@ import (
 
 func normalizationInput(status sdk.ExecutionStatus) sdk.NormalizationInput {
 	exitCode := 0
-			
+
 	return sdk.NormalizationInput{
 		RawExecution: sdk.RawExecution{
 			SchemaVersion:  sdk.RawExecutionSchemaVersion,
-			AdapterName:     "mock",
-			AdapterType:     sdk.AdapterTypeOther,
-			AdapterVersion:  "0.0.1",
-			Command:         "mock-tool",
-			Args:            []string{"run"},
-			ResolvedBinary:  "/usr/bin/mock-tool",
+			AdapterName:    "mock",
+			AdapterType:    sdk.AdapterTypeOther,
+			AdapterVersion: "0.0.1",
+			Command:        "mock-tool",
+			Args:           []string{"run"},
+			ResolvedBinary: "/usr/bin/mock-tool",
 			RunResult: sdk.RunResult{
 				Status:     status,
 				ExitCode:   &exitCode,
 				DurationMs: 2000,
 			},
-			StdoutPath:      "raw/mock/stdout.log",
-			StderrPath:      "raw/mock/stderr.log",
-			ToolOutputPath:  "raw/mock/tool-output.json",
+			StdoutPath:     "raw/mock/stdout.log",
+			StderrPath:     "raw/mock/stderr.log",
+			ToolOutputPath: "raw/mock/tool-output.json",
 		},
 		AdapterMeta: sdk.AdapterMetadata{
 			Name:             "jest",
