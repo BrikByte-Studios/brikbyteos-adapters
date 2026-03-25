@@ -3,9 +3,7 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"strings"
-	"time"
 )
 
 // AdapterType is the controlled category enum for adapter classification.
@@ -51,31 +49,6 @@ type Availability struct {
 	Available      bool   `json:"available"` // Avac
 	Reason         string `json:"reason,omitempty"`
 	ResolvedBinary string `json:"resolved_binary,omitempty"`
-}
-
-// Logger is the narrow structured logging contract adapters may use.
-// This avoids direct writes to stdout/stderr for adapter orchestration logs.
-type Logger interface {
-	Info(msg string, kv ...any)
-	Warn(msg string, kv ...any)
-	Error(msg string, kv ...any)
-}
-
-// RunRequest is the canonical execution input passed from runtime to adapters.
-//
-// Runtime constructs this once per adapter execution.
-// Adapters must treat all fields as read-only.
-type RunRequest struct {
-	RunID                string         `json:"run_id"`
-	WorkspaceRoot        string         `json:"workspace_root"`
-	ArtifactsRoot        string         `json:"artifacts_root"`
-	AdapterArtifactsPath string         `json:"adapter_artifacts_path"`
-	Environment          string         `json:"environment"`
-	ExecutionMode        string         `json:"execution_mode"`
-	Timeout              time.Duration  `json:"timeout"`
-	Logger               Logger         `json:"-"`
-	AdapterOptions       map[string]any `json:"adapter_options,omitempty"`
-	EnvVars              []string       `json:"env_vars,omitempty"`
 }
 
 // ExecutionStatus is the process-level result of one adapter execution attempt.
@@ -138,51 +111,6 @@ type NormalizationInput struct {
 // Until generated Go types exist, adapters return canonical JSON payload bytes.
 // Runtime is responsible for validating them against the schema contract.
 type NormalizedResult = json.RawMessage
-
-// Clone returns a defensive copy of the request so runtime can avoid accidental mutation.
-func (r RunRequest) Clone() RunRequest {
-	clonedOptions := make(map[string]any, len(r.AdapterOptions))
-	for k, v := range r.AdapterOptions {
-		clonedOptions[k] = v
-	}
-
-	clonedEnv := append([]string(nil), r.EnvVars...)
-	return RunRequest{
-		RunID:                r.RunID,
-		WorkspaceRoot:        r.WorkspaceRoot,
-		ArtifactsRoot:        r.ArtifactsRoot,
-		AdapterArtifactsPath: r.AdapterArtifactsPath,
-		Environment:          r.Environment,
-		ExecutionMode:        r.ExecutionMode,
-		Timeout:              r.Timeout,
-		Logger:               r.Logger,
-		AdapterOptions:       clonedOptions,
-		EnvVars:              clonedEnv,
-	}
-}
-
-// Validate ensures the run request is safe and complete enough for adapter execution.
-func (r RunRequest) Validate() error {
-	if strings.TrimSpace(r.RunID) == "" {
-		return fmt.Errorf("run_id must not be empty")
-	}
-	if strings.TrimSpace(r.WorkspaceRoot) == "" {
-		return fmt.Errorf("workspace_root must not be empty")
-	}
-	if !filepath.IsAbs(r.WorkspaceRoot) {
-		return fmt.Errorf("workspace_root must be absolute")
-	}
-	if strings.TrimSpace(r.ArtifactsRoot) == "" {
-		return fmt.Errorf("artifacts_root must not be empty")
-	}
-	if strings.TrimSpace(r.AdapterArtifactsPath) == "" {
-		return fmt.Errorf("adapter_artifacts_path must not be empty")
-	}
-	if r.Timeout <= 0 {
-		return fmt.Errorf("timeout must be > 0")
-	}
-	return nil
-}
 
 // Validate ensures the run result is structurally valid.
 func (r RunResult) Validate() error {
