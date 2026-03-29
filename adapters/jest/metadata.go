@@ -2,6 +2,9 @@ package jest
 
 import sdk "github.com/BrikByte-Studios/brikbyteos-adapters/sdk"
 
+// AdapterName is the canonical stable identifier for the Jest adapter.
+const AdapterName = "jest"
+
 // Metadata returns the canonical static metadata for the Jest adapter.
 func Metadata() sdk.AdapterMetadata {
 	return sdk.AdapterMetadata{

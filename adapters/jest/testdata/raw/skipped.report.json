@@ -1,0 +1,41 @@
+{
+  "success": true,
+  "numTotalTestSuites": 1,
+  "numPassedTestSuites": 1,
+  "numFailedTestSuites": 0,
+  "numTotalTests": 3,
+  "numPassedTests": 2,
+  "numFailedTests": 0,
+  "numPendingTests": 1,
+  "startTime": 1710000000000,
+  "testResults": [
+    {
+      "name": "auth/login.test.ts",
+      "startTime": 1710000000000,
+      "endTime": 1710000000150,
+      "assertionResults": [
+        {
+          "fullName": "auth login accepts valid token",
+          "status": "passed",
+          "failureMessages": [],
+          "ancestorTitles": ["auth", "login"],
+          "title": "accepts valid token"
+        },
+        {
+          "fullName": "auth login rejects invalid token",
+          "status": "passed",
+          "failureMessages": [],
+          "ancestorTitles": ["auth", "login"],
+          "title": "rejects invalid token"
+        },
+        {
+          "fullName": "auth login handles expired token",
+          "status": "pending",
+          "failureMessages": [],
+          "ancestorTitles": ["auth", "login"],
+          "title": "handles expired token"
+        }
+      ]
+    }
+  ]
+}
