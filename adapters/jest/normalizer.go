@@ -213,14 +213,14 @@ type normalizedPayload struct {
 }
 
 type normalizedSummary struct {
-	SuiteTotal  int   `json:"suite_total"`
-	SuitePassed int   `json:"suite_passed"`
-	SuiteFailed int   `json:"suite_failed"`
+	SuiteTotal  int `json:"suite_total"`
+	SuitePassed int `json:"suite_passed"`
+	SuiteFailed int `json:"suite_failed"`
 
-	TestTotal   int   `json:"test_total"`
-	TestPassed  int   `json:"test_passed"`
-	TestFailed  int   `json:"test_failed"`
-	TestSkipped int   `json:"test_skipped"`
+	TestTotal   int `json:"test_total"`
+	TestPassed  int `json:"test_passed"`
+	TestFailed  int `json:"test_failed"`
+	TestSkipped int `json:"test_skipped"`
 
 	DurationMs int64 `json:"duration_ms"`
 	IssueCount int   `json:"issue_count"`
