@@ -27,12 +27,12 @@ const (
 type ExecutionStatus string
 
 const (
-	StatusCompleted             ExecutionStatus = "completed"
-	StatusFailed                ExecutionStatus = "failed"
-	StatusTimedOut              ExecutionStatus = "timed_out"
-	StatusNotFound              ExecutionStatus = "not_found"
-	StatusDependencyFailure     ExecutionStatus = "dependency_failure"
-	StatusStructuredOutputMiss  ExecutionStatus = "structured_output_missing"
+	StatusCompleted            ExecutionStatus = "completed"
+	StatusFailed               ExecutionStatus = "failed"
+	StatusTimedOut             ExecutionStatus = "timed_out"
+	StatusNotFound             ExecutionStatus = "not_found"
+	StatusDependencyFailure    ExecutionStatus = "dependency_failure"
+	StatusStructuredOutputMiss ExecutionStatus = "structured_output_missing"
 )
 
 // Contract describes the canonical execution specification for Playwright.
@@ -135,14 +135,14 @@ func BuildArtifactPaths(outputRoot, workspaceRoot string) ArtifactPaths {
 	contract := DefaultContract()
 
 	return ArtifactPaths{
-		WorkspaceRoot:         cleanWorkspace,
-		OutputRoot:            cleanOutput,
-		TmpDir:                tmpDir,
-		RawDir:                rawDir,
-		StructuredReportPath:  filepath.Join(tmpDir, contract.StructuredOutputFileName),
-		StdoutPath:            filepath.Join(rawDir, contract.RawStdoutFileName),
-		StderrPath:            filepath.Join(rawDir, contract.RawStderrFileName),
-		VersionPath:           filepath.Join(rawDir, contract.VersionFileName),
+		WorkspaceRoot:        cleanWorkspace,
+		OutputRoot:           cleanOutput,
+		TmpDir:               tmpDir,
+		RawDir:               rawDir,
+		StructuredReportPath: filepath.Join(tmpDir, contract.StructuredOutputFileName),
+		StdoutPath:           filepath.Join(rawDir, contract.RawStdoutFileName),
+		StderrPath:           filepath.Join(rawDir, contract.RawStderrFileName),
+		VersionPath:          filepath.Join(rawDir, contract.VersionFileName),
 	}
 }
 
