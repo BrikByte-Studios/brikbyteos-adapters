@@ -8,7 +8,7 @@ const AdapterName = "jest"
 // Metadata returns the canonical static metadata for the Jest adapter.
 func Metadata() sdk.AdapterMetadata {
 	return sdk.AdapterMetadata{
-		Name:             "jest",
+		Name:             AdapterName,
 		Type:             sdk.AdapterTypeUnit,
 		Description:      "JavaScript and TypeScript unit test adapter",
 		Order:            10,
