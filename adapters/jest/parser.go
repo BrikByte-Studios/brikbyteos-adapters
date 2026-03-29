@@ -13,7 +13,7 @@ import (
 type ParseStatus string
 
 const (
-	ParseStatusOK         ParseStatus = "ok"
+	ParseStatusOK          ParseStatus = "ok"
 	ParseStatusParseFailed ParseStatus = "parse_failed"
 )
 
@@ -21,9 +21,9 @@ const (
 type ParserErrorType string
 
 const (
-	ParserErrorMissingReport   ParserErrorType = "missing_report"
-	ParserErrorInvalidJSON     ParserErrorType = "invalid_json"
-	ParserErrorSchemaMismatch  ParserErrorType = "schema_mismatch"
+	ParserErrorMissingReport  ParserErrorType = "missing_report"
+	ParserErrorInvalidJSON    ParserErrorType = "invalid_json"
+	ParserErrorSchemaMismatch ParserErrorType = "schema_mismatch"
 )
 
 // ParsedFailureSummary is a bounded, deterministic failure summary extracted from the raw report.
@@ -180,8 +180,8 @@ type jestRawReport struct {
 	NumFailedTests  int `json:"numFailedTests"`
 	NumPendingTests int `json:"numPendingTests"`
 
-	StartTime   int64                `json:"startTime"`
-	TestResults []jestRawTestResult  `json:"testResults"`
+	StartTime   int64               `json:"startTime"`
+	TestResults []jestRawTestResult `json:"testResults"`
 }
 
 // validate enforces strictness on required core fields while remaining tolerant of extra fields.
@@ -224,18 +224,18 @@ func (r jestRawReport) durationMS() int64 {
 }
 
 type jestRawTestResult struct {
-	Name              string               `json:"name"`
-	StartTime         int64                `json:"startTime"`
-	EndTime           int64                `json:"endTime"`
-	AssertionResults  []jestRawAssertion   `json:"assertionResults"`
+	Name             string             `json:"name"`
+	StartTime        int64              `json:"startTime"`
+	EndTime          int64              `json:"endTime"`
+	AssertionResults []jestRawAssertion `json:"assertionResults"`
 }
 
 type jestRawAssertion struct {
-	FullName                 string   `json:"fullName"`
-	Status                   string   `json:"status"`
-	FailureMessages          []string `json:"failureMessages"`
-	AncestorTitles           []string `json:"ancestorTitles"`
-	Title                    string   `json:"title"`
+	FullName        string   `json:"fullName"`
+	Status          string   `json:"status"`
+	FailureMessages []string `json:"failureMessages"`
+	AncestorTitles  []string `json:"ancestorTitles"`
+	Title           string   `json:"title"`
 }
 
 // extractFailureSummaries returns bounded, deterministic failure summaries.
