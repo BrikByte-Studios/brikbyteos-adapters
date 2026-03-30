@@ -21,6 +21,7 @@ const (
 //
 // Phase 1 recommendation:
 //   - filesystem target only
+//
 // This keeps the contract deterministic and avoids mixing image/repo/fs semantics
 // in the first execution slice.
 type TargetType string
@@ -145,14 +146,14 @@ func BuildArtifactPaths(outputRoot, workspaceRoot string) ArtifactPaths {
 	contract := DefaultContract()
 
 	return ArtifactPaths{
-		WorkspaceRoot:         cleanWorkspace,
-		OutputRoot:            cleanOutput,
-		TmpDir:                tmpDir,
-		RawDir:                rawDir,
-		StructuredReportPath:  filepath.Join(tmpDir, contract.StructuredReportName),
-		StdoutPath:            filepath.Join(rawDir, contract.RawStdoutFileName),
-		StderrPath:            filepath.Join(rawDir, contract.RawStderrFileName),
-		VersionPath:           filepath.Join(rawDir, contract.VersionFileName),
+		WorkspaceRoot:        cleanWorkspace,
+		OutputRoot:           cleanOutput,
+		TmpDir:               tmpDir,
+		RawDir:               rawDir,
+		StructuredReportPath: filepath.Join(tmpDir, contract.StructuredReportName),
+		StdoutPath:           filepath.Join(rawDir, contract.RawStdoutFileName),
+		StderrPath:           filepath.Join(rawDir, contract.RawStderrFileName),
+		VersionPath:          filepath.Join(rawDir, contract.VersionFileName),
 	}
 }
 
