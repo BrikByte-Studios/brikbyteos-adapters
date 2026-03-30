@@ -1,0 +1,34 @@
+{
+  "state": {
+    "testRunDurationMs": 45000
+  },
+  "metrics": {
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 1200
+      },
+      "thresholds": {}
+    },
+    "http_req_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "passes": 1190,
+        "fails": 10,
+        "rate": 0.0083
+      },
+      "thresholds": {}
+    },
+    "http_req_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(95)": 260.0,
+        "p(99)": 420.0
+      },
+      "thresholds": {}
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "state": {
+    "testRunDurationMs": 1000
+  },
+  "metrics": {
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {},
+      "thresholds": {}
+    }
+  }
+}
