@@ -1,0 +1,30 @@
+{
+  "stats": {
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 1,
+    "duration": 1800
+  },
+  "suites": [
+    {
+      "title": "auth",
+      "file": "tests/auth/login.spec.ts",
+      "suites": [],
+      "specs": [
+        {
+          "title": "recovers after retry",
+          "tests": [
+            {
+              "results": [
+                {
+                  "status": "flaky"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

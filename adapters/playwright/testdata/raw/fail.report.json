@@ -1,0 +1,45 @@
+{
+  "stats": {
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0,
+    "duration": 1500
+  },
+  "suites": [
+    {
+      "title": "auth",
+      "file": "tests/auth/login.spec.ts",
+      "suites": [],
+      "specs": [
+        {
+          "title": "accepts valid token",
+          "tests": [
+            {
+              "results": [
+                {
+                  "status": "passed"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "rejects invalid token",
+          "tests": [
+            {
+              "results": [
+                {
+                  "status": "failed",
+                  "error": {
+                    "message": "Expected 401 but received 500\nat tests/auth/login.spec.ts:22:3"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

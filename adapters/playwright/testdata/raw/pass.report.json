@@ -1,0 +1,42 @@
+{
+  "stats": {
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0,
+    "duration": 1200
+  },
+  "suites": [
+    {
+      "title": "auth",
+      "file": "tests/auth/login.spec.ts",
+      "suites": [],
+      "specs": [
+        {
+          "title": "accepts valid token",
+          "tests": [
+            {
+              "results": [
+                {
+                  "status": "passed"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "rejects invalid token",
+          "tests": [
+            {
+              "results": [
+                {
+                  "status": "passed"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
