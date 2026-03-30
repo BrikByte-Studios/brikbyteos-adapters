@@ -1,0 +1,42 @@
+{
+  "stats": {
+    "expected": 1,
+    "skipped": 1,
+    "unexpected": 0,
+    "flaky": 0,
+    "duration": 1100
+  },
+  "suites": [
+    {
+      "title": "auth",
+      "file": "tests/auth/login.spec.ts",
+      "suites": [],
+      "specs": [
+        {
+          "title": "accepts valid token",
+          "tests": [
+            {
+              "results": [
+                {
+                  "status": "passed"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "handles expired token",
+          "tests": [
+            {
+              "results": [
+                {
+                  "status": "skipped"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
