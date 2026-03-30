@@ -46,19 +46,19 @@ const (
 //   - script-path assumptions
 //   - threshold source-of-truth behavior
 type Contract struct {
-	AdapterName              string
-	DefaultTimeout           time.Duration
-	StructuredSummaryName    string
-	RawStdoutFileName        string
-	RawStderrFileName        string
-	VersionFileName          string
-	WorkingDirectoryMode     string
-	CloudExecutionOutOfScope bool
+	AdapterName               string
+	DefaultTimeout            time.Duration
+	StructuredSummaryName     string
+	RawStdoutFileName         string
+	RawStderrFileName         string
+	VersionFileName           string
+	WorkingDirectoryMode      string
+	CloudExecutionOutOfScope  bool
 	MultipleScriptsOutOfScope bool
-	StdoutPrimaryForbidden   bool
-	ThresholdSourceOfTruth   string
-	EnvInjectionDeferred     bool
-	ResolutionPriority       []ResolutionMode
+	StdoutPrimaryForbidden    bool
+	ThresholdSourceOfTruth    string
+	EnvInjectionDeferred      bool
+	ResolutionPriority        []ResolutionMode
 }
 
 // DefaultContract returns the canonical k6 execution contract for Phase 1.
