@@ -153,7 +153,7 @@ func parseFailure(errorType ParserErrorType, message string, details map[string]
 //
 // The parser is strict on required core fields and tolerant of extra fields.
 type playwrightRawReport struct {
-	Stats  playwrightStats  `json:"stats"`
+	Stats  playwrightStats   `json:"stats"`
 	Suites []playwrightSuite `json:"suites"`
 }
 
@@ -166,15 +166,15 @@ type playwrightStats struct {
 }
 
 type playwrightSuite struct {
-	Title  string             `json:"title"`
-	File   string             `json:"file"`
-	Suites []playwrightSuite  `json:"suites"`
-	Specs  []playwrightSpec   `json:"specs"`
+	Title  string            `json:"title"`
+	File   string            `json:"file"`
+	Suites []playwrightSuite `json:"suites"`
+	Specs  []playwrightSpec  `json:"specs"`
 }
 
 type playwrightSpec struct {
-	Title string             `json:"title"`
-	Tests []playwrightTest   `json:"tests"`
+	Title string           `json:"title"`
+	Tests []playwrightTest `json:"tests"`
 }
 
 type playwrightTest struct {
@@ -182,7 +182,7 @@ type playwrightTest struct {
 }
 
 type playwrightResult struct {
-	Status string `json:"status"`
+	Status string           `json:"status"`
 	Error  *playwrightError `json:"error,omitempty"`
 }
 
