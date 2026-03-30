@@ -41,11 +41,11 @@ const (
 //   - request_total is HTTP request count, not checks or iterations
 //   - request_failed is failed HTTP request count, not threshold-failed count
 type ParsedSummary struct {
-	RequestTotal   int     `json:"request_total"`
-	RequestFailed  int     `json:"request_failed"`
-	LatencyP95Ms   *float64 `json:"latency_p95_ms,omitempty"`
-	LatencyP99Ms   *float64 `json:"latency_p99_ms,omitempty"`
-	DurationMs     int64   `json:"duration_ms"`
+	RequestTotal  int      `json:"request_total"`
+	RequestFailed int      `json:"request_failed"`
+	LatencyP95Ms  *float64 `json:"latency_p95_ms,omitempty"`
+	LatencyP99Ms  *float64 `json:"latency_p99_ms,omitempty"`
+	DurationMs    int64    `json:"duration_ms"`
 }
 
 // ParsedThresholdSummary is a bounded threshold summary.
@@ -166,12 +166,12 @@ func parseFailure(errorType ParserErrorType, message string, details map[string]
 // assumptions for Phase 1. Extra sections are tolerated.
 
 type rawK6Summary struct {
-	State        rawState                `json:"state"`
-	Metrics      map[string]rawMetric    `json:"metrics"`
-	RootGroup    *json.RawMessage        `json:"root_group,omitempty"` // tolerated, ignored
-	Options      *json.RawMessage        `json:"options,omitempty"`    // tolerated, ignored
-	SetupData    *json.RawMessage        `json:"setup_data,omitempty"` // tolerated, ignored
-	Tainted      *json.RawMessage        `json:"tainted,omitempty"`    // tolerated, ignored
+	State     rawState             `json:"state"`
+	Metrics   map[string]rawMetric `json:"metrics"`
+	RootGroup *json.RawMessage     `json:"root_group,omitempty"` // tolerated, ignored
+	Options   *json.RawMessage     `json:"options,omitempty"`    // tolerated, ignored
+	SetupData *json.RawMessage     `json:"setup_data,omitempty"` // tolerated, ignored
+	Tainted   *json.RawMessage     `json:"tainted,omitempty"`    // tolerated, ignored
 }
 
 type rawState struct {
@@ -179,10 +179,10 @@ type rawState struct {
 }
 
 type rawMetric struct {
-	Type       string                   `json:"type"`
-	Contains   string                   `json:"contains"`
-	Values     map[string]float64       `json:"values"`
-	Thresholds map[string]rawThreshold  `json:"thresholds"`
+	Type       string                  `json:"type"`
+	Contains   string                  `json:"contains"`
+	Values     map[string]float64      `json:"values"`
+	Thresholds map[string]rawThreshold `json:"thresholds"`
 }
 
 type rawThreshold struct {
