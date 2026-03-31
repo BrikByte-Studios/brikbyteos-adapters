@@ -1,0 +1,23 @@
+{
+  "SchemaVersion": 2,
+  "ArtifactName": "infra",
+  "ArtifactType": "filesystem",
+  "Results": [
+    {
+      "Target": "infra/Dockerfile",
+      "Class": "config",
+      "Type": "dockerfile",
+      "Vulnerabilities": [],
+      "Misconfigurations": [
+        {
+          "ID": "DS001",
+          "Severity": "HIGH"
+        },
+        {
+          "ID": "DS002",
+          "Severity": "LOW"
+        }
+      ]
+    }
+  ]
+}

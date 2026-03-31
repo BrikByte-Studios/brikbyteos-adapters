@@ -1,0 +1,38 @@
+{
+  "SchemaVersion": 2,
+  "ArtifactName": "services/api",
+  "ArtifactType": "filesystem",
+  "Results": [
+    {
+      "Target": "services/api/package-lock.json",
+      "Class": "lang-pkgs",
+      "Type": "npm",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-0001",
+          "PkgName": "openssl",
+          "InstalledVersion": "1.1.1",
+          "FixedVersion": "1.1.2",
+          "Title": "Example critical vulnerability",
+          "Severity": "CRITICAL"
+        },
+        {
+          "VulnerabilityID": "CVE-2024-0002",
+          "PkgName": "lodash",
+          "InstalledVersion": "4.17.20",
+          "FixedVersion": "4.17.21",
+          "Title": "Example high vulnerability",
+          "Severity": "HIGH"
+        },
+        {
+          "VulnerabilityID": "CVE-2024-0003",
+          "PkgName": "debug",
+          "InstalledVersion": "2.6.8",
+          "FixedVersion": "2.6.9",
+          "Title": "Example medium vulnerability",
+          "Severity": "MEDIUM"
+        }
+      ]
+    }
+  ]
+}

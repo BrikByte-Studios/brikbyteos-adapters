@@ -1,0 +1,13 @@
+{
+  "SchemaVersion": 2,
+  "ArtifactName": "services/api",
+  "ArtifactType": "filesystem",
+  "Results": [
+    {
+      "Target": "services/api/package-lock.json",
+      "Class": "lang-pkgs",
+      "Type": "npm",
+      "Vulnerabilities": []
+    }
+  ]
+}
