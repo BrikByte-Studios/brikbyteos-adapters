@@ -37,8 +37,8 @@ func TestBuildCanonicalCommandSpec_UsesJSONAndOutputFile(t *testing.T) {
 	spec := buildCanonicalCommandSpec(
 		"/repo",
 		"/repo/.bb/tmp/jest-report.json",
-		resolvedBinary{
-			Mode:       resolutionLocal,
+		JestResolution{
+			Kind:       ResolutionLocal,
 			BinaryPath: "/repo/node_modules/.bin/jest",
 			ArgsPrefix: nil,
 		},

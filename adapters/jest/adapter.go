@@ -61,7 +61,7 @@ func (adapter) Version(ctx context.Context) (string, error) {
 		return "UNKNOWN", nil
 	}
 
-	args := versionArgs(resolved.Mode)
+	args := versionArgs(resolved.Kind)
 	cmd := exec.CommandContext(ctx, resolved.BinaryPath, args...)
 	cmd.Dir = workspaceRoot
 
@@ -191,9 +191,17 @@ func (adapter) Normalize(_ context.Context, in sdk.NormalizationInput) sdk.Norma
 	return normalized
 }
 
+type ResolutionKind string
+
+const (
+	ResolutionLocal  ResolutionKind = "local_binary"
+	ResolutionNPX    ResolutionKind = "npx"
+	ResolutionGlobal ResolutionKind = "global_binary"
+)
+
 // resolvedBinary represents the chosen Jest execution strategy.
-type resolvedBinary struct {
-	Mode       ResolutionMode
+type JestResolution struct {
+	Kind       ResolutionKind
 	BinaryPath string
 	ArgsPrefix []string
 }
@@ -231,7 +239,7 @@ type artifactPaths struct {
 func buildCanonicalCommandSpec(
 	workspaceRoot string,
 	reportPath string,
-	resolved resolvedBinary,
+	resolved JestResolution,
 	timeoutMs int,
 ) canonicalCommandSpec {
 	args := make([]string, 0, 8)
@@ -283,11 +291,11 @@ func ensureDirs(paths artifactPaths) error {
 }
 
 // resolveBinary resolves Jest in deterministic order.
-func resolveBinary(_ context.Context, workspaceRoot string) (resolvedBinary, error) {
+func resolveBinary(_ context.Context, workspaceRoot string) (JestResolution, error) {
 	localJest := filepath.Join(workspaceRoot, "node_modules", ".bin", localJestBinaryName())
 	if fileExists(localJest) {
-		return resolvedBinary{
-			Mode:       resolutionLocal,
+		return JestResolution{
+			Kind:       ResolutionLocal,
 			BinaryPath: localJest,
 			ArgsPrefix: nil,
 		}, nil
@@ -295,8 +303,8 @@ func resolveBinary(_ context.Context, workspaceRoot string) (resolvedBinary, err
 
 	npxPath, err := exec.LookPath(npxBinaryName())
 	if err == nil {
-		return resolvedBinary{
-			Mode:       resolutionNPX,
+		return JestResolution{
+			Kind:       ResolutionNPX,
 			BinaryPath: npxPath,
 			ArgsPrefix: []string{"jest"},
 		}, nil
@@ -304,19 +312,19 @@ func resolveBinary(_ context.Context, workspaceRoot string) (resolvedBinary, err
 
 	globalJest, err := exec.LookPath(globalJestBinaryName())
 	if err == nil {
-		return resolvedBinary{
-			Mode:       resolutionGlobal,
+		return JestResolution{
+			Kind:       ResolutionGlobal,
 			BinaryPath: globalJest,
 			ArgsPrefix: nil,
 		}, nil
 	}
 
-	return resolvedBinary{}, fmt.Errorf("jest binary not found: checked local binary, npx, and global binary")
+	return JestResolution{}, fmt.Errorf("jest binary not found: checked local binary, npx, and global binary")
 }
 
 // writeVersionFile captures best-effort version output for traceability.
-func writeVersionFile(ctx context.Context, workspaceRoot string, resolved resolvedBinary, outputPath string) error {
-	args := versionArgs(resolved.Mode)
+func writeVersionFile(ctx context.Context, workspaceRoot string, resolved JestResolution, outputPath string) error {
+	args := versionArgs(resolved.Kind)
 
 	cmd := exec.CommandContext(ctx, resolved.BinaryPath, args...)
 	cmd.Dir = workspaceRoot
@@ -329,8 +337,8 @@ func writeVersionFile(ctx context.Context, workspaceRoot string, resolved resolv
 	return os.WriteFile(outputPath, out, 0o644)
 }
 
-func versionArgs(mode ResolutionMode) []string {
-	if mode == resolutionNPX {
+func versionArgs(kind ResolutionKind) []string {
+	if kind == ResolutionNPX {
 		return []string{"jest", "--version"}
 	}
 	return []string{"--version"}
