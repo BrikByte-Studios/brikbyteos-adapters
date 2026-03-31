@@ -183,10 +183,10 @@ type rawTrivyReport struct {
 }
 
 type rawTrivyResult struct {
-	Target            string               `json:"Target"`
-	Class             string               `json:"Class"`
-	Type              string               `json:"Type"`
-	Vulnerabilities   []rawVulnerability   `json:"Vulnerabilities"`
+	Target            string                `json:"Target"`
+	Class             string                `json:"Class"`
+	Type              string                `json:"Type"`
+	Vulnerabilities   []rawVulnerability    `json:"Vulnerabilities"`
 	Misconfigurations []rawMisconfiguration `json:"Misconfigurations"`
 }
 
