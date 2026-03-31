@@ -17,7 +17,7 @@ const (
 	ParseStatusParseFailed ParseStatus = "parse_failed"
 )
 
-// ParserErrorType is the canonical structured error taxonomy for Jest parser failures.
+// ParserErrorType is the structured parser failure taxonomy.
 type ParserErrorType string
 
 const (
@@ -26,39 +26,31 @@ const (
 	ParserErrorSchemaMismatch ParserErrorType = "schema_mismatch"
 )
 
-// ParsedFailureSummary is a bounded, deterministic failure summary extracted from the raw report.
-//
-// Important:
-//   - This is not a raw pass-through of Jest internals.
-//   - It intentionally excludes unstable or overly verbose data such as full stack traces.
+// ParsedFailureSummary is a bounded, deterministic failure summary extracted
+// from the raw Jest report.
 type ParsedFailureSummary struct {
 	Suite   string `json:"suite"`
 	Test    string `json:"test"`
 	Message string `json:"message"`
 }
 
-// ParsedSummary contains the required adapter-private summary fields needed downstream.
+// ParsedSummary contains the core normalized metrics extracted from Jest.
 type ParsedSummary struct {
-	SuiteTotal  int `json:"suite_total"`
-	SuitePassed int `json:"suite_passed"`
-	SuiteFailed int `json:"suite_failed"`
-
-	TestTotal   int `json:"test_total"`
-	TestPassed  int `json:"test_passed"`
-	TestFailed  int `json:"test_failed"`
-	TestSkipped int `json:"test_skipped"`
-
-	DurationMs int64 `json:"duration_ms"`
+	TestTotal   int   `json:"test_total"`
+	TestPassed  int   `json:"test_passed"`
+	TestFailed  int   `json:"test_failed"`
+	TestSkipped int   `json:"test_skipped"`
+	DurationMs  int64 `json:"duration_ms"`
 }
 
-// ParserError is the structured parser failure object.
+// ParserError represents a structured parser failure.
 type ParserError struct {
 	Type    ParserErrorType `json:"type"`
 	Message string          `json:"message"`
 	Details map[string]any  `json:"details,omitempty"`
 }
 
-// ParseResult is the adapter-private intermediate parse contract for Jest.
+// ParseResult is the adapter-private intermediate parse model.
 //
 // It is intentionally shaped for:
 //   - deterministic parser output
@@ -73,15 +65,10 @@ type ParseResult struct {
 	Error       *ParserError           `json:"error,omitempty"`
 }
 
-// Parser reads the canonical Jest JSON report file and converts it into the adapter-private parse model.
+// Parser parses Jest JSON output into a deterministic intermediate model.
 type Parser struct{}
 
-// ParseFile parses a Jest report from disk.
-//
-// Rules:
-//   - JSON report file is the only primary structured input
-//   - missing or malformed reports return structured parse_failed results
-//   - test failures inside the report do not count as parser failures
+// ParseFile parses a Jest JSON report from disk.
 func (Parser) ParseFile(reportPath string) ParseResult {
 	if strings.TrimSpace(reportPath) == "" {
 		return parseFailure(
@@ -112,8 +99,6 @@ func (Parser) ParseFile(reportPath string) ParseResult {
 }
 
 // ParseBytes parses raw Jest JSON bytes.
-//
-// This function is pure and deterministic for identical input.
 func (Parser) ParseBytes(data []byte) ParseResult {
 	var raw jestRawReport
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -132,13 +117,10 @@ func (Parser) ParseBytes(data []byte) ParseResult {
 		)
 	}
 
-	result := ParseResult{
+	return ParseResult{
 		Adapter:     AdapterName,
 		ParseStatus: ParseStatusOK,
 		Summary: &ParsedSummary{
-			SuiteTotal:  raw.NumTotalTestSuites,
-			SuitePassed: raw.NumPassedTestSuites,
-			SuiteFailed: raw.NumFailedTestSuites,
 			TestTotal:   raw.NumTotalTests,
 			TestPassed:  raw.NumPassedTests,
 			TestFailed:  raw.NumFailedTests,
@@ -148,8 +130,6 @@ func (Parser) ParseBytes(data []byte) ParseResult {
 		Failures: extractFailureSummaries(raw.TestResults),
 		Warnings: []string{},
 	}
-
-	return result
 }
 
 func parseFailure(errorType ParserErrorType, message string, details map[string]any) ParseResult {
@@ -167,13 +147,8 @@ func parseFailure(errorType ParserErrorType, message string, details map[string]
 }
 
 // jestRawReport captures only the raw Jest JSON fields needed by the parser.
-// Extra fields are tolerated and ignored.
 type jestRawReport struct {
 	Success bool `json:"success"`
-
-	NumTotalTestSuites  int `json:"numTotalTestSuites"`
-	NumPassedTestSuites int `json:"numPassedTestSuites"`
-	NumFailedTestSuites int `json:"numFailedTestSuites"`
 
 	NumTotalTests   int `json:"numTotalTests"`
 	NumPassedTests  int `json:"numPassedTests"`
@@ -184,20 +159,12 @@ type jestRawReport struct {
 	TestResults []jestRawTestResult `json:"testResults"`
 }
 
-// validate enforces strictness on required core fields while remaining tolerant of extra fields.
 func (r jestRawReport) validate() error {
-	if r.NumTotalTestSuites < 0 ||
-		r.NumPassedTestSuites < 0 ||
-		r.NumFailedTestSuites < 0 ||
-		r.NumTotalTests < 0 ||
+	if r.NumTotalTests < 0 ||
 		r.NumPassedTests < 0 ||
 		r.NumFailedTests < 0 ||
 		r.NumPendingTests < 0 {
 		return fmt.Errorf("schema mismatch: required numeric fields must be non-negative")
-	}
-
-	if r.NumPassedTestSuites+r.NumFailedTestSuites > r.NumTotalTestSuites {
-		return fmt.Errorf("schema mismatch: suite counts are inconsistent")
 	}
 
 	if r.NumPassedTests+r.NumFailedTests+r.NumPendingTests > r.NumTotalTests {
@@ -211,8 +178,7 @@ func (r jestRawReport) validate() error {
 	return nil
 }
 
-// durationMS computes total execution duration as the sum of per-suite durations.
-// This avoids depending on unstable wall-clock timing derived from startTime.
+// durationMS computes a stable duration from per-suite times.
 func (r jestRawReport) durationMS() int64 {
 	var total int64
 	for _, tr := range r.TestResults {
@@ -239,10 +205,6 @@ type jestRawAssertion struct {
 }
 
 // extractFailureSummaries returns bounded, deterministic failure summaries.
-//
-// Determinism rules:
-//   - failure summaries are extracted in stable order
-//   - final list is sorted by suite, test, message
 func extractFailureSummaries(results []jestRawTestResult) []ParsedFailureSummary {
 	failures := make([]ParsedFailureSummary, 0)
 
@@ -273,7 +235,6 @@ func extractFailureSummaries(results []jestRawTestResult) []ParsedFailureSummary
 	return failures
 }
 
-// resolveAssertionName chooses the most useful stable test name for failure summaries.
 func resolveAssertionName(assertion jestRawAssertion) string {
 	if strings.TrimSpace(assertion.FullName) != "" {
 		return strings.TrimSpace(assertion.FullName)
@@ -284,9 +245,6 @@ func resolveAssertionName(assertion jestRawAssertion) string {
 	return "UNKNOWN_TEST"
 }
 
-// firstFailureMessage extracts a bounded single-line message from Jest failure output.
-//
-// We intentionally avoid preserving long stack traces in the parser output.
 func firstFailureMessage(messages []string) string {
 	if len(messages) == 0 {
 		return "Test failed"
@@ -297,7 +255,6 @@ func firstFailureMessage(messages []string) string {
 		return "Test failed"
 	}
 
-	// Keep only the first non-empty line to avoid noisy stack-trace dumps.
 	lines := strings.Split(msg, "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)

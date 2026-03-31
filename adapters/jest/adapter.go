@@ -2,7 +2,6 @@ package jest
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -17,17 +16,6 @@ import (
 )
 
 // adapter is the canonical Jest adapter implementation for Phase 1.
-//
-// Scope for WBS 1.8.1:
-//   - deterministic binary resolution
-//   - canonical command construction
-//   - raw artifact capture
-//   - explicit failure handling
-//
-// Out of scope for this file:
-//   - parsing raw Jest JSON
-//   - canonical normalization of Jest results
-//   - policy interpretation
 type adapter struct{}
 
 // New returns the canonical Jest adapter as an sdk.Adapter.
@@ -54,6 +42,7 @@ func (adapter) CheckAvailability(ctx context.Context) sdk.Availability {
 		return sdk.Availability{
 			Available:      false,
 			ResolvedBinary: "",
+			Reason:         err.Error(),
 		}
 	}
 
@@ -64,10 +53,6 @@ func (adapter) CheckAvailability(ctx context.Context) sdk.Availability {
 }
 
 // Version returns the best-effort Jest version using the canonical resolution chain.
-//
-// If the tool is not available or version lookup fails, UNKNOWN is returned.
-// This keeps version probing non-fatal and avoids making availability/version a source
-// of runtime crashes.
 func (adapter) Version(ctx context.Context) (string, error) {
 	workspaceRoot := resolveWorkspaceRoot(nil)
 
@@ -95,12 +80,6 @@ func (adapter) Version(ctx context.Context) (string, error) {
 
 // Run executes Jest using the canonical execution specification and returns
 // process-level execution truth only.
-//
-// Current design notes:
-//   - Raw execution is implemented here for WBS 1.8.1.
-//   - The return shape is intentionally limited by sdk.RunResult.
-//   - If sdk.RunRequest later exposes stable fields such as WorkspaceRoot or OutputRoot,
-//     resolveWorkspaceRoot / resolveOutputRoot can be simplified to direct field access.
 func (a adapter) Run(ctx context.Context, req sdk.RunRequest) sdk.RunResult {
 	workspaceRoot := resolveWorkspaceRoot(req)
 	outputRoot := resolveOutputRoot(req, workspaceRoot)
@@ -108,7 +87,7 @@ func (a adapter) Run(ctx context.Context, req sdk.RunRequest) sdk.RunResult {
 	paths := buildArtifactPaths(outputRoot)
 	if err := ensureDirs(paths); err != nil {
 		return sdk.RunResult{
-			Status:       sdk.ExecutionStatus("failed"),
+			Status:       sdk.ExecutionStatusFailed,
 			DurationMs:   0,
 			ErrorMessage: fmt.Sprintf("prepare artifact directories: %v", err),
 		}
@@ -117,7 +96,7 @@ func (a adapter) Run(ctx context.Context, req sdk.RunRequest) sdk.RunResult {
 	resolved, err := resolveBinary(ctx, workspaceRoot)
 	if err != nil {
 		return sdk.RunResult{
-			Status:       sdk.ExecutionStatus("not_found"),
+			Status:       sdk.ExecutionStatusUnavailable,
 			DurationMs:   0,
 			ErrorMessage: err.Error(),
 		}
@@ -128,7 +107,7 @@ func (a adapter) Run(ctx context.Context, req sdk.RunRequest) sdk.RunResult {
 	stdoutFile, err := os.Create(paths.StdoutPath)
 	if err != nil {
 		return sdk.RunResult{
-			Status:       sdk.ExecutionStatus("failed"),
+			Status:       sdk.ExecutionStatusFailed,
 			DurationMs:   0,
 			ErrorMessage: fmt.Sprintf("create stdout log: %v", err),
 		}
@@ -138,7 +117,7 @@ func (a adapter) Run(ctx context.Context, req sdk.RunRequest) sdk.RunResult {
 	stderrFile, err := os.Create(paths.StderrPath)
 	if err != nil {
 		return sdk.RunResult{
-			Status:       sdk.ExecutionStatus("failed"),
+			Status:       sdk.ExecutionStatusFailed,
 			DurationMs:   0,
 			ErrorMessage: fmt.Sprintf("create stderr log: %v", err),
 		}
@@ -162,94 +141,54 @@ func (a adapter) Run(ctx context.Context, req sdk.RunRequest) sdk.RunResult {
 	// Best-effort version capture.
 	_ = writeVersionFile(ctx, workspaceRoot, resolved, paths.VersionPath)
 
+	// Best-effort structured tool output capture.
+	toolOutput, _ := os.ReadFile(paths.ReportPath)
+
 	switch {
 	case errors.Is(runCtx.Err(), context.DeadlineExceeded):
 		return sdk.RunResult{
-			Status:       sdk.ExecutionStatus("timed_out"),
+			Status:       sdk.ExecutionStatusTimedOut,
 			DurationMs:   durationMs,
+			ToolOutput:   toolOutput,
 			ErrorMessage: "jest execution timed out",
 		}
 
 	case runErr == nil:
-		// Note:
-		// A successful process execution does not guarantee the report exists.
-		// Missing report handling belongs to parser/normalization flow later.
 		return sdk.RunResult{
-			Status:       sdk.ExecutionStatus("completed"),
+			Status:       sdk.ExecutionStatusCompleted,
 			DurationMs:   durationMs,
+			ToolOutput:   toolOutput,
 			ErrorMessage: "",
 		}
 
 	default:
 		var exitErr *exec.ExitError
 		if errors.As(runErr, &exitErr) {
-			// Important:
-			// failing tests are not runtime crashes; they are valid execution results.
+			// Failing tests are valid execution results, not runtime crashes.
 			return sdk.RunResult{
-				Status:       sdk.ExecutionStatus("failed"),
+				Status:       sdk.ExecutionStatusFailed,
 				DurationMs:   durationMs,
+				ToolOutput:   toolOutput,
 				ErrorMessage: fmt.Sprintf("jest exited with non-zero status: %d", exitErr.ExitCode()),
 			}
 		}
 
 		return sdk.RunResult{
-			Status:       sdk.ExecutionStatus("failed"),
+			Status:       sdk.ExecutionStatusFailed,
 			DurationMs:   durationMs,
+			ToolOutput:   toolOutput,
 			ErrorMessage: runErr.Error(),
 		}
 	}
 }
 
 // Normalize transforms raw execution into canonical normalized JSON.
-//
-// For WBS 1.8.1 this remains a deterministic, schema-compatible placeholder.
-// Real Jest parsing and canonical normalization belong to WBS 1.8.2 and 1.8.3.
-func (adapter) Normalize(context.Context, sdk.NormalizationInput) sdk.NormalizedResult {
-	payload := map[string]any{
-		"schema_version": "0.1",
-		"adapter": map[string]any{
-			"name":    "jest",
-			"type":    "unit",
-			"version": "UNKNOWN",
-		},
-		"execution": map[string]any{
-			"status":      "unavailable",
-			"duration_ms": 0,
-		},
-		"summary": map[string]any{
-			"status":  "unknown",
-			"total":   0,
-			"passed":  0,
-			"failed":  0,
-			"skipped": 0,
-		},
-		"evidence": map[string]any{
-			"complete": false,
-			"issues": []map[string]any{
-				{
-					"code":    "NORMALIZATION_NOT_IMPLEMENTED",
-					"message": "jest normalization will be implemented in subsequent tasks",
-				},
-			},
-		},
-		"artifacts": map[string]any{
-			"raw_stdout_path":      "",
-			"raw_stderr_path":      "",
-			"raw_tool_output_path": "",
-		},
-		"extensions": map[string]any{
-			"adapter_specific": map[string]any{},
-		},
-	}
-
-	encoded, err := json.Marshal(payload)
+func (adapter) Normalize(_ context.Context, in sdk.NormalizationInput) sdk.NormalizedResult {
+	normalized, err := normalizeJestRawExecution(in.RawExecution)
 	if err != nil {
-		// Marshal failure here is extremely unlikely, but we still return
-		// a deterministic fallback instead of panicking.
-		return sdk.NormalizedResult(`{"schema_version":"0.1","adapter":{"name":"jest","type":"unit","version":"UNKNOWN"},"execution":{"status":"unavailable","duration_ms":0},"summary":{"status":"unknown","total":0,"passed":0,"failed":0,"skipped":0},"evidence":{"complete":false,"issues":[{"code":"NORMALIZATION_NOT_IMPLEMENTED","message":"jest normalization will be implemented in subsequent tasks"}]},"artifacts":{"raw_stdout_path":"","raw_stderr_path":"","raw_tool_output_path":""},"extensions":{"adapter_specific":{}}}`)
+		return fallbackNormalizationFailure(in.RawExecution, err.Error())
 	}
-
-	return sdk.NormalizedResult(encoded)
+	return normalized
 }
 
 // resolvedBinary represents the chosen Jest execution strategy.
@@ -289,11 +228,6 @@ type artifactPaths struct {
 }
 
 // buildCanonicalCommandSpec builds the canonical Jest invocation.
-//
-// Canonical rules:
-//   - always use --json
-//   - always use --outputFile=<deterministic path>
-//   - do not rely on stdout as primary structured output
 func buildCanonicalCommandSpec(
 	workspaceRoot string,
 	reportPath string,
@@ -348,10 +282,7 @@ func ensureDirs(paths artifactPaths) error {
 	return nil
 }
 
-// resolveBinary resolves Jest in the required deterministic order:
-//  1. local node_modules/.bin/jest
-//  2. npx jest
-//  3. global jest
+// resolveBinary resolves Jest in deterministic order.
 func resolveBinary(_ context.Context, workspaceRoot string) (resolvedBinary, error) {
 	localJest := filepath.Join(workspaceRoot, "node_modules", ".bin", localJestBinaryName())
 	if fileExists(localJest) {
@@ -383,8 +314,7 @@ func resolveBinary(_ context.Context, workspaceRoot string) (resolvedBinary, err
 	return resolvedBinary{}, fmt.Errorf("jest binary not found: checked local binary, npx, and global binary")
 }
 
-// writeVersionFile captures the best-effort version output for traceability.
-// Failure here is intentionally non-fatal.
+// writeVersionFile captures best-effort version output for traceability.
 func writeVersionFile(ctx context.Context, workspaceRoot string, resolved resolvedBinary, outputPath string) error {
 	args := versionArgs(resolved.Mode)
 
@@ -433,11 +363,6 @@ func globalJestBinaryName() string {
 }
 
 // resolveWorkspaceRoot tries to extract a meaningful workspace root from the request.
-// If the SDK request type does not yet expose one, it falls back to the current directory.
-//
-// This reflection-based helper is deliberate:
-// it avoids coupling this implementation to a speculative RunRequest field name
-// while still being forward-compatible with future SDK evolution.
 func resolveWorkspaceRoot(req any) string {
 	if root := stringField(req, "WorkspaceRoot", "ProjectRoot", "RootDir", "WorkDir"); root != "" {
 		return filepath.Clean(root)
@@ -452,7 +377,6 @@ func resolveWorkspaceRoot(req any) string {
 }
 
 // resolveOutputRoot prefers an explicit output root if one exists on the request.
-// Otherwise it defaults to the workspace root.
 func resolveOutputRoot(req any, workspaceRoot string) string {
 	if out := stringField(req, "OutputRoot", "ArtifactsRoot", "RunOutputDir"); out != "" {
 		return filepath.Clean(out)
