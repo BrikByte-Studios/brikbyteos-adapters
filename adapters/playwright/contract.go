@@ -8,14 +8,13 @@ import (
 	"time"
 )
 
-// ResolutionMode identifies how the Playwright CLI was resolved.
-type ResolutionMode string
+// ResolutionKind is the canonical resolution taxonomy for Playwright executables.
+type ResolutionKind string
 
 const (
-	ResolutionLocal  ResolutionMode = "local_binary"
-	ResolutionNPX    ResolutionMode = "npx"
-	ResolutionGlobal ResolutionMode = "global_binary"
-	ResolutionNone   ResolutionMode = "not_found"
+	ResolutionLocal  ResolutionKind = "local_binary"			// The highest priority resolution mode: directly resolve the Playwright binary in the workspace's node_modules/.bin directory. This is the most common and recommended setup for Playwright users, as it ensures version consistency with project dependencies.
+	ResolutionNPX    ResolutionKind = "npx"						// The next priority resolution mode: use npx to execute Playwright. This allows users to leverage npx's resolution logic, which can find Playwright in the workspace or globally. This is a convenient fallback for users who have Playwright installed but not directly in node_modules/.bin.		
+	ResolutionGlobal ResolutionKind = "global_binary"			// The lowest priority resolution mode: directly resolve a globally installed Playwright binary. This is a less common setup and is generally not recommended due to potential version mismatches, but it serves as a final fallback for users who have Playwright installed globally.
 )
 
 // ExecutionStatus defines canonical execution outcomes at the execution-spec layer.
@@ -59,7 +58,7 @@ type Contract struct {
 	ScreenshotCaptureDeferred bool
 	VideoCaptureDeferred      bool
 	BrowserInstallRequired    bool
-	ResolutionPriority        []ResolutionMode
+	ResolutionPriority		  []ResolutionKind        
 }
 
 // DefaultContract returns the canonical Playwright execution contract for Phase 1.
@@ -86,7 +85,7 @@ func DefaultContract() Contract {
 		ScreenshotCaptureDeferred: true,
 		VideoCaptureDeferred:      true,
 		BrowserInstallRequired:    true,
-		ResolutionPriority: []ResolutionMode{
+		ResolutionPriority: []ResolutionKind{
 			ResolutionLocal,
 			ResolutionNPX,
 			ResolutionGlobal,
@@ -114,7 +113,7 @@ type CanonicalCommandSpec struct {
 	WorkingDirectory string
 	BinaryPath       string
 	Args             []string
-	Mode             ResolutionMode
+	Kind  			 ResolutionKind
 	Timeout          time.Duration
 	Artifacts        ArtifactPaths
 }

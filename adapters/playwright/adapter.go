@@ -2,6 +2,8 @@ package playwright
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	sdk "github.com/BrikByte-Studios/brikbyteos-adapters/sdk"
 )
@@ -42,14 +44,62 @@ func (adapter) Run(context.Context, sdk.RunRequest) sdk.RunResult {
 }
 
 // Normalize transforms raw execution into canonical normalized JSON.
-func (adapter) Normalize(context.Context, sdk.NormalizationInput) sdk.NormalizedResult {
-	return []byte(`{
+func (adapter) Normalize(_ context.Context, in sdk.NormalizationInput) sdk.NormalizedResult {
+	switch in.RawExecution.RunResult.Status {
+	case sdk.ExecutionStatusUnavailable:
+		return fallbackUnavailableNormalization(in.RawExecution)
+	case sdk.ExecutionStatusTimedOut:
+		return fallbackTimedOutNormalization(in.RawExecution)
+	}
+
+	toolOutput := in.RawExecution.RunResult.ToolOutput
+	if len(toolOutput) == 0 {
+		return fallbackMissingToolOutputNormalization(in.RawExecution)
+	}
+
+	parseResult := (Parser{}).ParseBytes(toolOutput)
+	return Normalizer{}.Normalize(parseResult)
+}
+
+func fallbackUnavailableNormalization(raw sdk.RawExecution) sdk.NormalizedResult {
+	return sdk.NormalizedResult([]byte(fmt.Sprintf(`{
 		"schema_version":"0.1",
-		"adapter":{"name":"playwright","type":"ui","version":"UNKNOWN"},
-		"execution":{"status":"unavailable","duration_ms":0},
-		"summary":{"status":"unknown","total":0,"passed":0,"failed":0,"skipped":0},
-		"evidence":{"complete":false,"issues":[{"code":"NORMALIZATION_FAILED","message":"playwright normalization not implemented yet"}]},
-		"artifacts":{"raw_stdout_path":"","raw_stderr_path":"","raw_tool_output_path":""},
-		"extensions":{"adapter_specific":{}}
-	}`)
+		"adapter":"%s",
+		"status":"normalization_failed",
+		"result_kind":"test_suite",
+		"summary":null,
+		"evidence":{"raw_available":false,"normalized_complete":false},
+		"error":{"type":"adapter_unavailable","message":%q,"details":{}}
+	}`, AdapterName, nonEmpty(raw.RunResult.ErrorMessage, "playwright adapter unavailable"))))
+}
+
+func fallbackTimedOutNormalization(raw sdk.RawExecution) sdk.NormalizedResult {
+	return sdk.NormalizedResult([]byte(fmt.Sprintf(`{
+		"schema_version":"0.1",
+		"adapter":"%s",
+		"status":"normalization_failed",
+		"result_kind":"test_suite",
+		"summary":null,
+		"evidence":{"raw_available":true,"normalized_complete":false},
+		"error":{"type":"execution_timed_out","message":%q,"details":{}}
+	}`, AdapterName, nonEmpty(raw.RunResult.ErrorMessage, "playwright execution timed out"))))
+}
+
+func fallbackMissingToolOutputNormalization(raw sdk.RawExecution) sdk.NormalizedResult {
+	return sdk.NormalizedResult([]byte(fmt.Sprintf(`{
+		"schema_version":"0.1",
+		"adapter":"%s",
+		"status":"normalization_failed",
+		"result_kind":"test_suite",
+		"summary":null,
+		"evidence":{"raw_available":false,"normalized_complete":false},
+		"error":{"type":"missing_report","message":"playwright tool output missing","details":{}}
+	}`, AdapterName)))
+}
+
+func nonEmpty(value, fallback string) string {
+	if strings.TrimSpace(value) != "" {
+		return value
+	}
+	return fallback
 }
