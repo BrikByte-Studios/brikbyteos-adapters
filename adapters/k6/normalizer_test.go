@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"reflect"
 	"testing"
+
+	sdk "github.com/BrikByte-Studios/brikbyteos-adapters/sdk"
 )
 
 func TestNormalizer_Normalize_Pass(t *testing.T) {
@@ -23,18 +25,58 @@ func TestNormalizer_Normalize_Pass(t *testing.T) {
 		Warnings: []string{},
 	}
 
-	out := decodeNormalized(t, Normalizer{}.Normalize(input))
+	raw := sdk.RawExecution{
+		SchemaVersion:  "0.1",
+		AdapterName:    AdapterName,
+		AdapterType:    sdk.AdapterTypePerformance,
+		AdapterVersion: "UNKNOWN",
+		RunResult: sdk.RunResult{
+			Status:     sdk.ExecutionStatusCompleted,
+			DurationMs: 30000,
+		},
+	}
 
-	if out.Status != k6StatusPass {
-		t.Fatalf("expected status=%q, got %q", k6StatusPass, out.Status)
+	out := decodeNormalized(t, Normalizer{}.Normalize(input, raw))
+
+	if out.SchemaVersion != "0.1" {
+		t.Fatalf("schema_version = %q, want %q", out.SchemaVersion, "0.1")
 	}
-	if out.Summary == nil {
-		t.Fatal("expected non-nil summary")
+	if out.Adapter.Name != AdapterName {
+		t.Fatalf("adapter.name = %q, want %q", out.Adapter.Name, AdapterName)
 	}
-	if out.Summary.IssueCount != 0 {
-		t.Fatalf("expected issue_count=0, got %d", out.Summary.IssueCount)
+	if out.Adapter.Type != string(sdk.AdapterTypePerformance) {
+		t.Fatalf("adapter.type = %q, want %q", out.Adapter.Type, string(sdk.AdapterTypePerformance))
 	}
-	assertValidNormalizedShape(t, out)
+	if out.Execution.Status != "completed" {
+		t.Fatalf("execution.status = %q, want %q", out.Execution.Status, "completed")
+	}
+	if out.Execution.DurationMs != 30000 {
+		t.Fatalf("execution.duration_ms = %d, want %d", out.Execution.DurationMs, 30000)
+	}
+	if out.Summary.Status != "passed" {
+		t.Fatalf("summary.status = %q, want %q", out.Summary.Status, "passed")
+	}
+	if out.Summary.Total != 1 {
+		t.Fatalf("summary.total = %d, want %d", out.Summary.Total, 1)
+	}
+	if out.Summary.Passed != 1 {
+		t.Fatalf("summary.passed = %d, want %d", out.Summary.Passed, 1)
+	}
+	if out.Summary.Failed != 0 {
+		t.Fatalf("summary.failed = %d, want %d", out.Summary.Failed, 0)
+	}
+	if out.Summary.Skipped != 0 {
+		t.Fatalf("summary.skipped = %d, want %d", out.Summary.Skipped, 0)
+	}
+	if !out.Evidence.Complete {
+		t.Fatal("evidence.complete = false, want true")
+	}
+	if len(out.Evidence.Issues) != 0 {
+		t.Fatalf("evidence.issues = %v, want empty", out.Evidence.Issues)
+	}
+	if out.Extensions.AdapterSpecific == nil {
+		t.Fatal("extensions.adapter_specific = nil, want initialized map")
+	}
 }
 
 func TestNormalizer_Normalize_FailedThresholds(t *testing.T) {
@@ -60,24 +102,43 @@ func TestNormalizer_Normalize_FailedThresholds(t *testing.T) {
 		Warnings: []string{},
 	}
 
-	out := decodeNormalized(t, Normalizer{}.Normalize(input))
+	raw := sdk.RawExecution{
+		SchemaVersion:  "0.1",
+		AdapterName:    AdapterName,
+		AdapterType:    sdk.AdapterTypePerformance,
+		AdapterVersion: "UNKNOWN",
+		RunResult: sdk.RunResult{
+			Status:     sdk.ExecutionStatusFailed,
+			DurationMs: 30000,
+		},
+	}
 
-	if out.Status != k6StatusFailed {
-		t.Fatalf("expected status=%q, got %q", k6StatusFailed, out.Status)
+	out := decodeNormalized(t, Normalizer{}.Normalize(input, raw))
+
+	if out.Execution.Status != "failed" {
+		t.Fatalf("execution.status = %q, want %q", out.Execution.Status, "failed")
 	}
-	if out.Summary == nil {
-		t.Fatal("expected non-nil summary")
+	if out.Summary.Status != "failed" {
+		t.Fatalf("summary.status = %q, want %q", out.Summary.Status, "failed")
 	}
-	if out.Summary.IssueCount != 2 {
-		t.Fatalf("expected issue_count=2, got %d", out.Summary.IssueCount)
+	if out.Summary.Total != 2 {
+		t.Fatalf("summary.total = %d, want %d", out.Summary.Total, 2)
 	}
-	if out.Extensions == nil || out.Extensions.K6 == nil {
-		t.Fatal("expected extensions.k6 to be present")
+	if out.Summary.Passed != 0 {
+		t.Fatalf("summary.passed = %d, want %d", out.Summary.Passed, 0)
 	}
-	if len(out.Extensions.K6.Thresholds) != 2 {
-		t.Fatalf("expected 2 threshold summaries, got %d", len(out.Extensions.K6.Thresholds))
+	if out.Summary.Failed != 2 {
+		t.Fatalf("summary.failed = %d, want %d", out.Summary.Failed, 2)
 	}
-	assertValidNormalizedShape(t, out)
+	if out.Summary.Skipped != 0 {
+		t.Fatalf("summary.skipped = %d, want %d", out.Summary.Skipped, 0)
+	}
+	if !out.Evidence.Complete {
+		t.Fatal("evidence.complete = false, want true")
+	}
+	if len(out.Evidence.Issues) != 0 {
+		t.Fatalf("evidence.issues = %v, want empty", out.Evidence.Issues)
+	}
 }
 
 func TestNormalizer_Normalize_ParserFailure(t *testing.T) {
@@ -93,21 +154,34 @@ func TestNormalizer_Normalize_ParserFailure(t *testing.T) {
 		},
 	}
 
-	out := decodeNormalized(t, Normalizer{}.Normalize(input))
+	raw := sdk.RawExecution{
+		SchemaVersion:  "0.1",
+		AdapterName:    AdapterName,
+		AdapterType:    sdk.AdapterTypePerformance,
+		AdapterVersion: "UNKNOWN",
+		RunResult: sdk.RunResult{
+			Status:     sdk.ExecutionStatusFailed,
+			DurationMs: 0,
+		},
+	}
 
-	if out.Status != k6StatusNormalizationFailed {
-		t.Fatalf("expected status=%q, got %q", k6StatusNormalizationFailed, out.Status)
+	out := decodeNormalized(t, Normalizer{}.Normalize(input, raw))
+
+	if out.Execution.Status != "failed" {
+		t.Fatalf("execution.status = %q, want %q", out.Execution.Status, "failed")
 	}
-	if out.Summary != nil {
-		t.Fatal("expected nil summary on parser-failure normalization path")
+	if out.Summary.Status != "unknown" {
+		t.Fatalf("summary.status = %q, want %q", out.Summary.Status, "unknown")
 	}
-	if out.Error == nil {
-		t.Fatal("expected structured error on normalization_failed payload")
+	if out.Evidence.Complete {
+		t.Fatal("evidence.complete = true, want false")
 	}
-	if out.Evidence.NormalizedComplete {
-		t.Fatal("expected normalized_complete=false on normalization_failed payload")
+	if len(out.Evidence.Issues) != 1 {
+		t.Fatalf("len(evidence.issues) = %d, want %d", len(out.Evidence.Issues), 1)
 	}
-	assertValidNormalizedShape(t, out)
+	if out.Evidence.Issues[0].Code != "INVALID_TOOL_OUTPUT" {
+		t.Fatalf("issue.code = %q, want %q", out.Evidence.Issues[0].Code, "INVALID_TOOL_OUTPUT")
+	}
 }
 
 func TestNormalizer_IsDeterministic(t *testing.T) {
@@ -128,13 +202,23 @@ func TestNormalizer_IsDeterministic(t *testing.T) {
 		Warnings: []string{"z-warning", "a-warning"},
 	}
 
-	a := decodeNormalized(t, Normalizer{}.Normalize(input))
-	b := decodeNormalized(t, Normalizer{}.Normalize(input))
+	raw := sdk.RawExecution{
+		SchemaVersion:  "0.1",
+		AdapterName:    AdapterName,
+		AdapterType:    sdk.AdapterTypePerformance,
+		AdapterVersion: "UNKNOWN",
+		RunResult: sdk.RunResult{
+			Status:     sdk.ExecutionStatusFailed,
+			DurationMs: 30000,
+		},
+	}
+
+	a := decodeNormalized(t, Normalizer{}.Normalize(input, raw))
+	b := decodeNormalized(t, Normalizer{}.Normalize(input, raw))
 
 	if !reflect.DeepEqual(a, b) {
-		t.Fatalf("expected deterministic normalized output")
+		t.Fatal("expected deterministic normalized output")
 	}
-	assertValidNormalizedShape(t, a)
 }
 
 func TestNormalizer_NoTopLevelK6Leakage(t *testing.T) {
@@ -154,14 +238,34 @@ func TestNormalizer_NoTopLevelK6Leakage(t *testing.T) {
 		Warnings: []string{},
 	}
 
-	raw := Normalizer{}.Normalize(input)
-
-	var generic map[string]any
-	if err := json.Unmarshal(raw, &generic); err != nil {
-		t.Fatalf("unmarshal generic payload: %v", err)
+	raw := sdk.RawExecution{
+		SchemaVersion:  "0.1",
+		AdapterName:    AdapterName,
+		AdapterType:    sdk.AdapterTypePerformance,
+		AdapterVersion: "UNKNOWN",
+		RunResult: sdk.RunResult{
+			Status:     sdk.ExecutionStatusCompleted,
+			DurationMs: 30000,
+		},
 	}
 
-	for _, forbidden := range []string{"thresholds", "metrics", "values", "thresholds_map"} {
+	normalized := Normalizer{}.Normalize(input, raw)
+
+	var generic map[string]any
+	if err := json.Unmarshal(normalized, &generic); err != nil {
+		t.Fatalf("unmarshal normalized payload: %v", err)
+	}
+
+	for _, forbidden := range []string{
+		"thresholds",
+		"metrics",
+		"values",
+		"thresholds_map",
+		"result_kind",
+		"raw_available",
+		"normalized_complete",
+		"error",
+	} {
 		if _, exists := generic[forbidden]; exists {
 			t.Fatalf("unexpected top-level k6-specific field leakage: %s", forbidden)
 		}
@@ -176,12 +280,4 @@ func decodeNormalized(t *testing.T, raw []byte) normalizedPayload {
 		t.Fatalf("unmarshal normalized payload: %v", err)
 	}
 	return out
-}
-
-func assertValidNormalizedShape(t *testing.T, payload normalizedPayload) {
-	t.Helper()
-
-	if err := ValidateNormalizedPayloadShape(payload); err != nil {
-		t.Fatalf("invalid normalized payload shape: %v", err)
-	}
 }
